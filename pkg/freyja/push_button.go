@@ -17,7 +17,7 @@ import (
 
 // PushButton is a button with text.
 type PushButton struct {
-	Button widget.Clickable // Button is the clickable of this push button.
+	Origin widget.Clickable // Origin is the clickable of this push button.
 
 	Background         op.CallOp // Background is called to fill the background of this button.
 	BackgroundDisabled op.CallOp // BackgroundDisabled is used instead of Background in disabled mode.
@@ -41,7 +41,7 @@ type PushButton struct {
 func (b *PushButton) Layout(gtx layout.Context) layout.Dimensions {
 	min := gtx.Constraints.Min
 	disabled := gtx.Queue == nil
-	return b.Button.Layout(
+	return b.Origin.Layout(
 		gtx,
 		func(gtx layout.Context) layout.Dimensions {
 			semantic.Button.Add(gtx.Ops)
@@ -56,10 +56,10 @@ func (b *PushButton) Layout(gtx layout.Context) layout.Dimensions {
 							b.BackgroundDisabled.Add(gtx.Ops)
 						} else {
 							b.Background.Add(gtx.Ops)
-							if b.Button.Pressed() {
+							if b.Origin.Pressed() {
 								paint.Fill(gtx.Ops, b.ClickColor)
 							} else {
-								if b.Button.Hovered() {
+								if b.Origin.Hovered() {
 									paint.Fill(gtx.Ops, b.HoverColor)
 								}
 							}
