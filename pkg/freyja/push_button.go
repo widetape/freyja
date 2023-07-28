@@ -15,27 +15,29 @@ import (
 	"gioui.org/widget"
 )
 
+// PushButton is a button with text.
 type PushButton struct {
-	Button widget.Clickable
+	Button widget.Clickable // Button is the clickable of this push button.
 
-	Background         op.CallOp
-	BackgroundDisabled op.CallOp
-	CornerRadius       unit.Dp
+	Background         op.CallOp // Background is called to fill the background of this button.
+	BackgroundDisabled op.CallOp // BackgroundDisabled is used instead of Background in disabled mode.
+	CornerRadius       unit.Dp   // CornerRadius is the radius of smooth corners.
 
-	Inset layout.Inset
+	Inset layout.Inset // Inset is used to margin the text from corners of this button.
 
-	Shaper *text.Shaper
-	Font   font.Font
+	Shaper *text.Shaper // Shaper is used to layout the text.
+	Font   font.Font    // Font is used for the text.
 
-	Label              string
-	FontSize           unit.Sp
-	Foreground         op.CallOp
-	ForegroundDisabled op.CallOp
+	Label              string    // Label is the text.
+	FontSize           unit.Sp   // FontSize is the size of the text.
+	Foreground         op.CallOp // Foreground is the material operation for the text.
+	ForegroundDisabled op.CallOp // ForegroundDisabled is used instead of Foreground in disabled mode.
 
-	HoverColor color.NRGBA
-	ClickColor color.NRGBA
+	HoverColor color.NRGBA // HoverColor is drawn over the push button when it's hovered.
+	ClickColor color.NRGBA // ClickColor is drawn over the push button while it's being pressed.
 }
 
+// Layout lays PushButton out to the context.
 func (b *PushButton) Layout(gtx layout.Context) layout.Dimensions {
 	min := gtx.Constraints.Min
 	disabled := gtx.Queue == nil
