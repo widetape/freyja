@@ -23,6 +23,8 @@ type PushButton struct {
 	BackgroundDisabled op.CallOp // BackgroundDisabled is used instead of Background in disabled mode.
 	CornerRadius       unit.Dp   // CornerRadius is the radius of smooth corners.
 
+	Shadow Shadow // Shadow is the shadow casted by this button.
+
 	Inset layout.Inset // Inset is used to margin the text from corners of this button.
 
 	Shaper *text.Shaper // Shaper is used to layout the text.
@@ -39,62 +41,67 @@ type PushButton struct {
 
 // Layout lays PushButton out to the context.
 func (b *PushButton) Layout(gtx layout.Context) layout.Dimensions {
-	min := gtx.Constraints.Min
-	disabled := gtx.Queue == nil
-	return b.Origin.Layout(
+	var disabled = gtx.Queue == nil
+	contentRecord := op.Record(gtx.Ops)
+	dimensions := layout.Center.Layout(
 		gtx,
 		func(gtx layout.Context) layout.Dimensions {
-			semantic.Button.Add(gtx.Ops)
-			return layout.Stack{Alignment: layout.Center}.Layout(
+			return b.Inset.Layout(
 				gtx,
-				layout.Expanded(func(gtx layout.Context) layout.Dimensions {
-					size := gtx.Constraints.Min
-					shape := clip.UniformRRect(image.Rectangle{Max: size}, gtx.Dp(b.CornerRadius))
-					func() {
-						defer shape.Push(gtx.Ops).Pop()
-						if disabled {
-							b.BackgroundDisabled.Add(gtx.Ops)
-						} else {
-							b.Background.Add(gtx.Ops)
-							if b.Origin.Pressed() {
-								paint.Fill(gtx.Ops, b.ClickColor)
-							} else {
-								if b.Origin.Hovered() {
-									paint.Fill(gtx.Ops, b.HoverColor)
-								}
-							}
-						}
-					}()
-					return layout.Dimensions{Size: size}
-				}),
-				layout.Stacked(func(gtx layout.Context) layout.Dimensions {
-					gtx.Constraints.Min = min
-					return layout.Center.Layout(
+				func(gtx layout.Context) layout.Dimensions {
+					var color op.CallOp
+					if disabled {
+						color = b.ForegroundDisabled
+					} else {
+						color = b.Foreground
+					}
+					return widget.Label{MaxLines: 1}.Layout(
 						gtx,
-						func(gtx layout.Context) layout.Dimensions {
-							return b.Inset.Layout(
-								gtx,
-								func(gtx layout.Context) layout.Dimensions {
-									var color op.CallOp
-									if disabled {
-										color = b.ForegroundDisabled
-									} else {
-										color = b.Foreground
-									}
-									return widget.Label{MaxLines: 1}.Layout(
-										gtx,
-										b.Shaper,
-										b.Font,
-										b.FontSize,
-										b.Label,
-										color,
-									)
-								},
-							)
-						},
+						b.Shaper,
+						b.Font,
+						b.FontSize,
+						b.Label,
+						color,
 					)
-				}),
+				},
 			)
 		},
 	)
+	content := contentRecord.Stop()
+	var (
+		size   = dimensions.Size
+		shape  = clip.UniformRRect(image.Rectangle{Max: size}, gtx.Dp(b.CornerRadius))
+		shadow = b.Shadow
+	)
+	if disabled {
+		shadow.Color.A = 0
+	}
+	shadow.Layout(
+		gtx,
+		shape.Path(gtx.Ops),
+		func(gtx layout.Context) layout.Dimensions {
+			semantic.Button.Add(gtx.Ops)
+			return b.Origin.Layout(
+				gtx,
+				func(gtx layout.Context) layout.Dimensions {
+					defer shape.Push(gtx.Ops).Pop()
+					if disabled {
+						b.BackgroundDisabled.Add(gtx.Ops)
+					} else {
+						b.Background.Add(gtx.Ops)
+						if b.Origin.Pressed() {
+							paint.Fill(gtx.Ops, b.ClickColor)
+						} else {
+							if b.Origin.Hovered() {
+								paint.Fill(gtx.Ops, b.HoverColor)
+							}
+						}
+					}
+					return layout.Dimensions{Size: size}
+				},
+			)
+		},
+	)
+	content.Add(gtx.Ops)
+	return dimensions
 }
