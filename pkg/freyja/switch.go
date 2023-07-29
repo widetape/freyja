@@ -18,6 +18,9 @@ type Switch struct {
 	Background         op.CallOp // Background is used to draw the background for this switch.
 	BackgroundDisabled op.CallOp // BackgroundDisabled is used instead of Background when the switch is disabled.
 
+	EnvironmentShadow Shadow // EnvironmentShadow is the shadow casted into the switch.
+	KnobShadow        Shadow // KnobShadow is the shadow casted by the knob.
+
 	Tint         op.CallOp // Tint is used to draw the tinted background overlay of the switch in "On" mode.
 	TintDisabled op.CallOp // TintDisabled is used instead of Tint when the switch is disabled.
 
@@ -57,6 +60,13 @@ func (s *Switch) Layout(gtx layout.Context) layout.Dimensions {
 								s.Tint.Add(gtx.Ops)
 							}
 						}
+						s.EnvironmentShadow.Layout(
+							gtx,
+							shape.Path(gtx.Ops),
+							func(gtx layout.Context) layout.Dimensions {
+								return layout.Dimensions{Size: size}
+							},
+						)
 					}()
 					return layout.Dimensions{Size: size}
 				}),
@@ -78,15 +88,19 @@ func (s *Switch) Layout(gtx layout.Context) layout.Dimensions {
 								shift.X = shiftSize
 							}
 							defer op.Offset(shift).Push(gtx.Ops).Pop()
-							func() {
-								defer shape.Push(gtx.Ops).Pop()
-								if disabled {
-									s.KnobDisabled.Add(gtx.Ops)
-								} else {
-									s.Knob.Add(gtx.Ops)
-								}
-							}()
-							return layout.Dimensions{Size: image.Pt(size+shiftSize, size)}
+							return s.KnobShadow.Layout(
+								gtx,
+								shape.Path(gtx.Ops),
+								func(gtx layout.Context) layout.Dimensions {
+									defer shape.Push(gtx.Ops).Pop()
+									if disabled {
+										s.KnobDisabled.Add(gtx.Ops)
+									} else {
+										s.Knob.Add(gtx.Ops)
+									}
+									return layout.Dimensions{Size: image.Pt(size+shiftSize, size)}
+								},
+							)
 						},
 					)
 				}),
