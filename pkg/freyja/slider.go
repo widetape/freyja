@@ -66,7 +66,7 @@ func (s *Slider) Layout(gtx layout.Context) layout.Dimensions {
 					fgtx,
 					layout.Horizontal,
 					0, 1, false,
-					0,
+					knobSize,
 				)
 			}()
 			func() {
